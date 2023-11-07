@@ -1,0 +1,207 @@
+\input opmac
+\regfont\tensl
+\def\SRCangle#1{{$\langle$\sl#1\/$\rangle$}}
+\newwrite\SRCfile
+\def\SRCFILENAME{\immediate\closeout\SRCfile\immediate\openout\SRCfile=}
+\newif\ifsaveSRC
+\newif\ifaddingSRC
+%180711
+\newif\ifprintSRC \printSRCtrue
+\newbox\nonprintbox
+%/180711
+\def\BEGSRC{%180209
+  %180711
+  \ifprintSRC\par\ttskip\fi
+  %\par\ttskip
+  %/180711
+  \bgroup
+  \catcode`\|=0 \catcode`\\=12
+  %/180209
+  \futurelet\BEGSRCt\BEGSRCa}
+\def\BEGSRCa{\ifx<\BEGSRCt
+    \saveSRCtrue
+    % 180209
+    \catcode`\|=12 \catcode`\\=0
+    %/180209
+    \expandafter\BEGSRCb
+  \else
+    \saveSRCfalse
+    \expandafter\BEGSRCz
+  \fi}
+\def\BEGSRCb<#1>{\def\SRCid{#1}%
+  % 180209
+  \catcode`\|=0 \catcode`\\=12
+  %/180209
+  \futurelet\BEGSRCt\BEGSRCc}
+\def\BEGSRCc{\ifx\bgroup\BEGSRCt
+    \addingSRCfalse
+    % 180209
+    \catcode`\|=12 \catcode`\\=0
+    %/180209
+    \expandafter\BEGSRCd
+  \else
+    \addingSRCtrue
+    \expandafter\BEGSRCz
+  \fi}
+\def\BEGSRCd#1{\sdef{SRCtit:\SRCid}{#1}\BEGSRCz}
+\def\BEGSRCz{%180711
+  \ifprintSRC\else\setbox\nonprintbox\vbox\bgroup\fi
+  %/180711
+  % 180209
+  %\par\ttskip\bgroup
+  %/180209
+  \ifsaveSRC
+    \noindent\SRCangle{\csname SRCtit:\SRCid\endcsname}%
+      ${}\ifaddingSRC\mathrel{{+}{\equiv}}\else\equiv\fi$%
+    \par\nobreak
+  \fi
+  \def\SRCcontent{}%
+  \setSRC
+  \SRCensurehmode\<%
+  \SRCensurehmode\label
+  \parindent\ttindent
+  \csname SRChook\endcsname
+  \tenrm\thefontscale[700]\let\sevenrm\thefont
+  \everypar{\SRCgetline}%
+  \def\par##1{\endgraf\ifx##1\egroup\else\penalty\ttpenalty
+    %\expandafter\quitvmode
+    \fi##1}%
+  \obeylines\startSRC}
+{\catcode9=12
+  \gdef\setSRC{\def\do##1{\catcode`##1=12}\dospecials
+    \ifx\savedttchar\undefined\else\catcode\savedttchar=12 \fi
+    % 180209
+    %\adef{ }{ }%
+    \adef{ }{\ }%
+    %/180209
+    \catcode`\|=0 \adef{^^I}{\SRCtab}}}
+{\catcode32=13 \gdef\SRCtab{    }}
+\def\SRCensurehmode#1{\def#1{\quitvmode\noexpand#1}}
+%220428
+\def\SRCnoex{\noexpand}
+\def\SRCscan#1\<#2>#3\SRCend{%
+  \ifx~#3~%
+    \let\SRCnaz\relax
+  \else
+    \def\SRCods{#1}%
+    \ifx\SRCods\SRCnoex
+      \def\SRCods{}%
+    \fi
+    \def\SRCnaz{#2}%
+  \fi}
+%/220428
+\begingroup\lccode`\~13 \lowercase{\endgroup\def\SRCgetline#1~}{%
+  \SRCscan#1\<>\SRCend
+  \ifx\SRCnaz\relax
+    \addto\SRCcontent{\SRConeline{#1}}%
+    \SRCprintline{#1}%
+  \else
+    \expandafter\expandafter\expandafter\addto
+      \expandafter\expandafter\expandafter\SRCcontent
+      \expandafter\expandafter\expandafter{%
+        \expandafter\expandafter\expandafter\SRCblock
+        \expandafter\expandafter\expandafter{%
+        \expandafter\SRCods\expandafter}\expandafter{\SRCnaz}}%
+    \SRCprintblock{\SRCods}{\SRCnaz}%
+  \fi\par}
+{\catcode`\|=0 \catcode`\\=12
+  |gdef|startSRC#1\ENDSRC{|tt#1|doSRC
+    %180711
+    |ifprintSRC
+      |egroup|par|ttskip
+    |else
+      |egroup|egroup
+    |fi
+    %|egroup|par|ttskip
+    %/180711
+    |csname endSRChook|endcsname|testparA}}
+\def\doSRC{\everypar{}%
+  % 180209
+  \def\ { }%
+  %/180209
+  \ifsaveSRC
+    \ifaddingSRC
+      \immediate\write\SRCdsfile{\noexpand\ADDSRC{\SRCid}}%
+    \else
+      \immediate\write\SRCdsfile{\noexpand\DEFSRC
+        {\SRCid}{\csname SRCtit:\SRCid\endcsname}}%
+    \fi
+    \let\SRConeline\SRCwritedsline
+    \let\SRCbeginline\relax
+    \let\SRCendline\relax
+    \def\SRCblock{\SRCreadblock}%
+    \let\SRCreadblock\relax
+    % 180209
+    \csname SRCdshook\endcsname
+    %/180209
+    \immediate\write\SRCdsfile{\SRCcontent}%
+    \immediate\write\SRCdsfile{\noexpand\ENDDEFSRC}%
+  \else
+    \let\SRConeline\SRCwriteline
+    \let\SRCblock\SRCwriteblock
+    % 180209
+    %\adef{ }{ }%
+    %/180209
+    \SRCcontent
+  \fi}
+\newcount\SRClinenum
+\def\SRCprintlinenum{%180711
+  \ifprintSRC
+    \ifnum\SRClinenum<0 \else
+      \global\advance\SRClinenum1
+    \fi
+  \fi
+  %\global\advance\SRClinenum1
+  %/180711
+  \csname SRClinehook\endcsname
+  \quitvmode
+  %180711
+  \ifnum\SRClinenum<0 \else
+    \llap{\sevenrm\the\SRClinenum\kern.9em}%
+  \fi
+  %\llap{\sevenrm\the\SRClinenum\kern.9em}%
+  %/180711
+  }
+\def\SRCprintline#1{\SRCprintlinenum#1\par}
+\def\SRCprintblock#1#2{\SRCprintlinenum
+  #1\SRCangle{\csname SRCtit:#2\endcsname}\par}
+\def\SRCwriteline#1{\csname SRCwritehook\endcsname
+  %220428
+  %\immediate\write\SRCfile{#1}}
+  \immediate\write\SRCfile{\SRCodsazeni#1}}
+  %/220428
+\def\SRCodsazeni{}
+%\def\SRCwriteblock#1{\csname SRCcon:#1\endcsname}
+\def\SRCwriteblock#1#2{\begingroup
+  \addto\SRCodsazeni{#1}%
+  \csname SRCcon:#2\endcsname
+  \endgroup}
+\def\SRCwritedsline#1{\SRCbeginline:#1\SRCendline}
+\def\DEFSRC#1#2{\def\SRCid{#1}\sdef{SRCtit:#1}{#2}
+%  \sdef{SRCcon:#1}{#3}}
+  \sdef{SRCcon:#1}{}}
+\def\ADDSRC#1{\def\SRCid{#1}%
+  %\expandafter\addto\csname SRCcon:#1\endcsname{#2}
+  }
+\def\SRCbeginline:{\bgroup\setSRC \catcode`\|=12 \SRCbeginlineA} % 230226
+{\catcode`\|=0 \catcode`\\=12
+  |gdef|SRCbeginlineA#1\SRCendline{|egroup
+    |expandafter|addto|csname SRCcon:|SRCid|endcsname
+      {|SRConeline{#1}}%
+    |ignorespaces}}
+\def\SRCreadblock{\begingroup\afterassignment\SRCreadblockA\catcode32=13}
+\def\SRCreadblockA#1{\gdef\SRCods{#1}\endgroup\SRCreadblockB}
+\def\SRCreadblockB#1{\expandafter\addto
+  \csname SRCcon:\SRCid\expandafter\endcsname\expandafter{%
+    \expandafter\SRCblock\expandafter{\SRCods}{#1}}}
+\let\ENDDEFSRC\relax
+\newread\testin
+\def\softinput #1 {\let\next=\relax \openin\testin=#1
+\ifeof\testin \message{Warning: the file #1 does not exist}%
+\else \closein\testin \def\next{\input #1 }\fi
+\next}
+\softinput\jobname.ds
+\newwrite\SRCdsfile
+\immediate\openout\SRCdsfile\jobname.ds
+\def\|{|}
+\addto\dospecials{\do\*}
