@@ -44,9 +44,9 @@
     \expandafter\BEGSRCz
   \fi}
 \def\BEGSRCd#1{\sdef{SRCtit:\SRCid}{#1}\BEGSRCz}
-\def\BEGSRCz{%180711
-  \ifprintSRC\else\setbox\nonprintbox\vbox\bgroup\fi
-  %/180711
+\def\BEGSRCz{%240119
+  \ifprintSRC\else\setbox\nonprintbox\vbox\bgroup\begingroup\fi
+  %/240119
   % 180209
   %\par\ttskip\bgroup
   %/180209
@@ -110,7 +110,9 @@
     |ifprintSRC
       |egroup|par|ttskip
     |else
-      |egroup|egroup
+      %240119
+      |endgroup|egroup|egroup
+      %/240119
     |fi
     %|egroup|par|ttskip
     %/180711
